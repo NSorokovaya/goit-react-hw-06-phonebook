@@ -1,66 +1,75 @@
-//import { Component } from 'react';
-import { useState } from 'react';
+import { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import css from './ContactForm.module.css';
 
-// class ContactForm extends Component {
-//   state = {
-//     name: '',
-//     number: '',
-//   };
+import contactSelector from '../../redux/selector';
 
-//   handleNameChange = e => {
-//     this.setState({ name: e.currentTarget.value });
-//   };
+import { addContact } from "../../redux/contactSlice";
 
-//   handleNumberChange = e => {
-//     this.setState({ number: e.currentTarget.value });
-//   };
-
-//   handleSubmit = e => {
-//     e.preventDefault();
-//     this.props.onSubmit(this.state);
-//     this.reset();
-//   };
-
-//   reset = () => {
-//     this.setState({ name: '', number: '' });
-//   };
-export const ContactForm = ({ onSubmit }) => {
-  const [name, setName] = useState('');
-  const [number, setNumber] = useState('');
+import { nanoid } from "nanoid";
 
 
+const ContactForm = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    number: ''
+  });
 
+  const contacts = useSelector(contactSelector.getContact);
+  const dispatch = useDispatch();
 
-const handleChange = evt => {
-    const { name, value } = evt.target;
-    switch (name) {
-      case 'name':
-        setName(value);
-        break;
-      case 'number':
-        setNumber(value);
-        break;
-      default:
-        return;
+  const formatPhoneNumber = (value) => {
+    const phoneNumber = value.replace(/[^\d]/g, '');
+    const phoneNumberLength = phoneNumber.length;
+
+    if (phoneNumberLength < 4) return phoneNumber;
+
+    if (phoneNumberLength < 7) {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
     }
-  };
 
-  const handleSubmit = e => {
-    e.preventDefault();
-    onSubmit({ name, number });
+    return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(
+      3,
+      6
+    )}-${phoneNumber.slice(6, 10)}`;
+  }
 
-    e.currentTarget.reset();
-     setName('')
-    setNumber('')
-  };
+  const isTheSameNameInCollection = (name) => {
+    return contacts.some((contact) => contact.name.trim().toLowerCase() === name.toLowerCase().trim());
+  }
 
+  const onAddContact = () => {
+    if (formData.name.length <= 0) {
+      alert(`The length should me greater than 0 symbols`);
+      return null;
+    }
 
+    if (isTheSameNameInCollection(formData.name)) {
+      alert(`${formData.name} is already in contacts`);
+      return null;
+    }
 
+    const newContact = {
+      ...formData,
+      id: nanoid()
+    }
 
-  
+    dispatch(addContact(newContact));
+  }
+
+  const onChange = (event) => {
+    const { value, name } = event.target;
+
+    if (name === 'number') {
+      setFormData({...formData, [name]: formatPhoneNumber(value) });
+      return null;
+    }
+
+    setFormData({...formData, [name]: value });
+  }
+
    return (
-    <form onSubmit={handleSubmit} className={css.contactForm}>
+    <form  className={css.contactForm}>
       <label>
         Name <br />
         <input
@@ -70,8 +79,8 @@ const handleChange = evt => {
           pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
           title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
           required
-          value={name}
-          onChange={handleChange}
+          value={formData.name}
+          onChange={onChange}
         />
       </label>
       <br />
@@ -84,8 +93,8 @@ const handleChange = evt => {
           pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
           title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
           required
-          value={number}
-          onChange={handleChange}
+          value={formData.number}
+          onChange={onChange}
         />
       </label>
       <br />
@@ -94,7 +103,6 @@ const handleChange = evt => {
       </button>
     </form>
   );
-  }
-
+}
 
 export default ContactForm;
