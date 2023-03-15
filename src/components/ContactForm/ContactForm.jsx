@@ -98,7 +98,7 @@ const ContactForm = () => {
         />
       </label>
       <br />
-      <button className={css.btn} type="submit">
+      <button className={css.btn} onClick={onAddContact}>
         Add contact
       </button>
     </form>
